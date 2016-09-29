@@ -1,2 +1,4 @@
 # rnnslu-torch
-a torch implement version of SLU in RNN
+A Torch implementation of [SLU in RNN](http://deeplearning.net/tutorial/rnnslu.html)
+
+
