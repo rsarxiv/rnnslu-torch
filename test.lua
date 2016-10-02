@@ -43,7 +43,7 @@ function feval()
 	local predictions = {}
 	local loss = 0.0
 	local count = 0
-
+	local correct = 0
 	for i=1,x_all:size()[1] do -- outter loop
 		_x = x_all[i]:clone()
 		x = {}
@@ -60,12 +60,15 @@ function feval()
        		embeddings[t] = protos.embed:forward(x[t]):resize(opt.rnn_size*opt.win)
         	h[t] = protos.rnn:forward{embeddings[t],h[t-1]}
         	predictions[t] = protos.softmax:forward(h[t])
-        	loss = loss + protos.criterion:forward(predictions[t],y[t])
+        	_,pindex = predictions[t]:topk(1,true)
+        	if pindex[1] == y[t] then
+        		correct = correct + 1
+        	end
+        	-- loss = loss + protos.criterion:forward(predictions[t],y[t])
         	count = count + 1
 		end
 	end
-
-	loss = loss / count
+	loss = 1.0 * correct / count
 	print("loss: " .. loss)
 
 end
