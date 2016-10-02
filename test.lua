@@ -6,8 +6,6 @@ require 'hdf5'
 require 'Embedding'
 require 'Dataset' 
 local RNN = require 'RNN'
-local model_utils = require 'model_utils'
-
 
 cmd = torch.CmdLine()
 cmd:text()
@@ -47,25 +45,49 @@ function feval()
 	local count = 0
 
 	for i=1,x_all:size()[1] do -- outter loop
-		x = x_all[i]:clone()
+		_x = x_all[i]:clone()
+		x = {}
+		for t=1,_x:size()[1] do
+			if _x[t] ~= -1 then
+				table.insert(x,_x[t])
+			end
+		end
+		x = contextWin(x,opt)
 		y = y_all[i]:clone()
+		x = x:add(2)
+		y = y:add(1)
 		for t=1,x:size()[1] do -- inner loop
-			if x[t] ~= -1 then
-				x[t] = x[t] + 2
-				y[t] = y[t] + 1
-				local input = torch.Tensor({x[t]})
-       			embeddings[t] = protos.embed:forward(input):resize(opt.rnn_size*opt.win)
-        		h[t] = protos.rnn:forward{embeddings[t],h[t-1]}
-        		predictions[t] = protos.softmax:forward(h[t])
-        		loss = loss + protos.criterion:forward(predictions[t],y[t])
-        		count = count + 1
-        	end
+       		embeddings[t] = protos.embed:forward(x[t]):resize(opt.rnn_size*opt.win)
+        	h[t] = protos.rnn:forward{embeddings[t],h[t-1]}
+        	predictions[t] = protos.softmax:forward(h[t])
+        	loss = loss + protos.criterion:forward(predictions[t],y[t])
+        	count = count + 1
 		end
 	end
 
 	loss = loss / count
 	print("loss: " .. loss)
 
+end
+
+function contextWin(tt,opt)
+-- win = opt.win
+  local start = {}
+  local step = math.floor(opt.win / 2)
+  for i=1,step do
+    table.insert(start,-1)
+  end
+  local s = torch.Tensor(start)
+  local e = s:clone()
+  local t = torch.Tensor(tt)
+  local list = s:cat(t):cat(e)
+  local result = {}
+  local size = #tt
+  for i=1,size do
+    local a = list:narrow(1,i,opt.win)
+    table.insert(result,a:totable())
+  end
+  return torch.Tensor(result)
 end
 
 feval()
