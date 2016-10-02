@@ -35,6 +35,18 @@ def buildTrainSet():
 	f["words"] = np.array(wordlist)
 	f["labels"] = np.array(labellist)
 	f.close()
+
+def buildTestSet():
+	wordlist = testset[0]
+	labellist = testset[2]
+	lens = [len(wlist) for wlist in wordlist]
+	max_len = max(lens)
+	wordlist = [wlist.tolist() + [-1]*(max_len-len(wlist)) for wlist in wordlist]
+	labellist = [llist.tolist() + [-1]*(max_len-len(llist)) for llist in labellist]
+	f = h5py.File("data/testset.hdf5","w")
+	f["words"] = np.array(wordlist)
+	f["labels"] = np.array(labellist)
+	f.close()
 	
 	
 if __name__ == "__main__":
@@ -42,4 +54,5 @@ if __name__ == "__main__":
 	#buildWordDict()
 	#buildLabelDict()
 	#buildTrainSet()
+	#buildTestSet()
 

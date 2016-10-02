@@ -57,9 +57,8 @@ function Dataset:contextWin(tt,opt)
   local result = {}
   local size = #tt
   for i=1,size do
-    local a = list:range(i,opt.win+i-1)
-    print(a)
-    --table.insert(result,a)
+    local a = list:narrow(1,i,opt.win)
+    table.insert(result,a:totable())
   end
   return torch.Tensor(result)
 end
@@ -74,7 +73,8 @@ function Dataset:nextBatch()
         table.insert(target,self.target[self.batchId][i])
       end
    end
-
-   self.batchId = self.batchId + 1
-   return self:contextWin(source,opt)
+   -- self.batchId = self.batchId + 1
+   self.batchId = torch.random(1,self.source:size()[1])
+   return self:contextWin(source,opt),torch.Tensor(target)
 end
+
